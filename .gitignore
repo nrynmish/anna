@@ -1,0 +1,86 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pytype/
+venv/
+.venv/
+env/
+ENV/
+
+# Build / packaging
+build/
+dist/
+*.tar.gz
+*.whl
+.coverage
+.htmlcov/
+
+# Node / frontend
+node_modules/
+.npm/
+.pnpm-store/
+.next/
+out/
+
+# Local data and generated artifacts
+*.sqlite3
+*.db
+*.parquet
+*.csv
+*.jsonl
+*.npz
+*.npy
+local_data/
+*.pkl
+*.pickle
+*.faiss
+*.index
+embeddings/
+indexes/
+vector_store/
+
+# Project datasets and generated output
+/data/raw/*
+/data/processed/*
+/data/golden/*
+/data/samples/*
+/artifacts/*
+!/.gitkeep
+!/data/raw/.gitkeep
+!/data/processed/.gitkeep
+!/data/golden/.gitkeep
+!/data/samples/.gitkeep
+!/artifacts/.gitkeep
+!/scripts/.gitkeep
+!/tests/.gitkeep
+!/src/ingestion/.gitkeep
+!/src/intent/.gitkeep
+!/src/retrieval/.gitkeep
+!/src/generation/.gitkeep
+!/src/decision/.gitkeep
+!/src/evaluation/.gitkeep
+!/app/backend/.gitkeep
+!/app/frontend/.gitkeep
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
