@@ -91,6 +91,16 @@ mypy src
 - The evaluation pipeline will eventually be reproducible in under 15 minutes.
 - Actual model and evaluation results will never be hard-coded or fabricated in this repository.
 
+## Dataset reconnaissance
+
+To profile the raw Kaggle dataset without modifying or committing the source data, run:
+
+```bash
+python scripts/profile_dataset.py
+```
+
+This script inspects the actual CSV schema, measures quality and conversation structure, and writes profiling artifacts locally under the artifacts directory. The raw Kaggle files remain untouched and uncommitted. Profiling is evidence-based and uses no LLM or fabricated labels.
+
 ## Project philosophy
 
 This project is designed to be easy to explain in a live technical interview: a clean Python backend foundation, explicit separation between offline and online work, and a clear path to a grounded support-agent pipeline without premature optimization or unnecessary infrastructure.
