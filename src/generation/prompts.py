@@ -180,21 +180,46 @@ or is not sufficiently supported.
 
 
 def build_user_prompt(request: GenerationRequest) -> str:
+    """Build a bounded generation prompt.
+
+    Keep the prompt comfortably below llama.cpp's 4096-token context limit.
+    Retrieved cases are already ranked by similarity, so higher-ranked
+    evidence is retained first.
+    """
+    MAX_PROMPT_CHARS = 7000
+    MAX_CASE_CHARS = 1200
+    MAX_FIELD_CHARS = 500
+
     evidence_blocks: list[str] = []
+    current_chars = 0
 
     for index, case in enumerate(request.retrieved_cases, start=1):
-        evidence_blocks.append(
-            f"""HISTORICAL CASE {index}
-Similarity: {case.similarity:.3f}
-Historical intent: {case.intent or "unknown"}
-Customer issue: {case.customer_text}
-Historical support response: {sanitize_evidence_text(case.uber_response)}
-Resolution type: {case.resolution_type}"""
+        customer_text = sanitize_evidence_text(case.customer_text)[:MAX_FIELD_CHARS]
+        support_response = sanitize_evidence_text(case.uber_response)[:MAX_FIELD_CHARS]
+        resolution_type = str(case.resolution_type or "unknown")[:120]
+
+        block = (
+            f"HISTORICAL CASE {index}\\n"
+            f"Similarity: {case.similarity:.3f}\\n"
+            f"Historical intent: {case.intent or "unknown"}\\n"
+            f"Customer issue: {customer_text}\\n"
+            f"Historical support response: {support_response}\\n"
+            f"Resolution type: {resolution_type}"
         )
 
-    evidence = "\n\n".join(evidence_blocks) or "NO HISTORICAL EVIDENCE AVAILABLE."
+        if current_chars + len(block) > MAX_PROMPT_CHARS:
+            break
 
-    return f"""CUSTOMER MESSAGE:
+        evidence_blocks.append(block)
+        current_chars += len(block) + 2
+
+    evidence = (
+        "\\n\\n".join(evidence_blocks)
+        if evidence_blocks
+        else "NO HISTORICAL EVIDENCE AVAILABLE."
+    )
+
+    prompt = f"""CUSTOMER MESSAGE:
 {request.customer_message}
 
 CLASSIFIED INTENT:
@@ -223,6 +248,8 @@ Remember:
 - If the evidence is insufficient or the request requires unavailable
   customer-specific information, escalate.
 """
+
+    return prompt[:MAX_PROMPT_CHARS]
 
 
 def build_messages(request: GenerationRequest) -> list[dict[str, str]]:

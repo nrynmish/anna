@@ -42,7 +42,11 @@ class QwenClient:
             json=payload,
             timeout=self.timeout,
         )
-        response.raise_for_status()
+        if not response.ok:
+            raise RuntimeError(
+                f"Qwen server returned HTTP {response.status_code}: "
+                f"{response.text}"
+            )
 
         body = response.json()
         choices = body.get("choices", [])

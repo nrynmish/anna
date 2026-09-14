@@ -88,7 +88,7 @@ class BGERetriever:
                 intent_confidence=float(
                     self.corpus[index]["intent_confidence"]
                 ),
-                similarity=float(scores[index]),
+                similarity=max(-1.0, min(1.0, float(scores[index]))),
                 created_at=self.corpus[index].get("created_at"),
             )
             for index in top_indices

@@ -777,7 +777,7 @@ def write_report(summary: Dict, path: Path) -> None:
 
 
 def main() -> None:
-    golden_path = ROOT / "data" / "golden" / "tweets.json"
+    golden_path = ROOT / "data" / "golden" / "golden_200.json"
     routing_path = ROOT / "data" / "golden" / "routing_labels.json"
     out_jsonl = ROOT / "artifacts" / "anna_golden_evaluation.jsonl"
     out_md = ROOT / "artifacts" / "anna_golden_evaluation.md"

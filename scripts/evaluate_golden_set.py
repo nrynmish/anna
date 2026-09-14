@@ -15,7 +15,7 @@ from src.evaluation.golden_set import (
 
 
 def main() -> None:
-    golden_path = Path("data/golden/tweets.json")
+    golden_path = Path("data/golden/golden_200.json")
     out_jsonl = Path("artifacts/golden_set.jsonl")
     out_md = Path("artifacts/golden_evaluation.md")
 
