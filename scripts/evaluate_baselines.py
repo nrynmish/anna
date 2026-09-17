@@ -13,7 +13,7 @@ from src.evaluation.golden_set import evaluate_direct_intent
 
 
 def main() -> None:
-    golden_path = Path("data/golden/tweets.json")
+    golden_path = Path("data/golden/golden_200.json")
 
     golden = json.loads(golden_path.read_text(encoding="utf-8"))
     gold_labels = [str(item["intent"]) for item in golden]

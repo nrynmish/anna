@@ -177,3 +177,87 @@ def test_risk_detection():
     assert "account_compromise" in flags
     assert "fraud" in flags
     assert "legal_threat" in flags
+
+
+def test_racist_driver_attack_escalates():
+    result = decide(
+        make_input(
+            intent="driver_behavior",
+            intent_confidence=0.95,
+            top_similarity=0.95,
+            evidence_agreement=0.95,
+            resolution_agreement=0.95,
+            customer_message="I have just faced the second racist attack from a driver.",
+        )
+    )
+
+    assert result.decision == Decision.ESCALATE
+    assert result.auto_handle is False
+    assert "safety_incident" in result.risk_flags
+
+
+def test_hacked_disabled_account_escalates():
+    result = decide(
+        make_input(
+            intent="account_access",
+            intent_confidence=0.95,
+            top_similarity=0.95,
+            evidence_agreement=0.95,
+            resolution_agreement=0.95,
+            customer_message="My hacked/disabled account is preventing me from taking rides.",
+        )
+    )
+
+    assert result.decision == Decision.ESCALATE
+    assert result.auto_handle is False
+    assert "account_compromise" in result.risk_flags
+
+
+def test_account_specific_driver_contact_escalates():
+    result = decide(
+        make_input(
+            intent="lost_and_found",
+            intent_confidence=0.95,
+            top_similarity=0.95,
+            evidence_agreement=0.95,
+            resolution_agreement=0.95,
+            customer_message="I lost my mobile in the cab and need the driver's contact number.",
+        )
+    )
+
+    assert result.decision == Decision.ESCALATE
+    assert result.auto_handle is False
+
+
+def test_account_specific_refund_escalates():
+    result = decide(
+        make_input(
+            intent="refunds_adjustments",
+            intent_confidence=0.95,
+            top_similarity=0.95,
+            evidence_agreement=0.95,
+            resolution_agreement=0.95,
+            customer_message="I would like to be refunded for that cancellation.",
+        )
+    )
+
+    assert result.decision == Decision.ESCALATE
+    assert result.auto_handle is False
+    assert "account-specific" in result.reason
+
+
+def test_account_specific_lost_item_request_escalates():
+    result = decide(
+        make_input(
+            intent="lost_and_found",
+            intent_confidence=0.95,
+            top_similarity=0.95,
+            evidence_agreement=0.95,
+            resolution_agreement=0.95,
+            customer_message="I lost my mobile in the cab. Please contact my driver.",
+        )
+    )
+
+    assert result.decision == Decision.ESCALATE
+    assert result.auto_handle is False
+    assert "account-specific" in result.reason

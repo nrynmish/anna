@@ -399,7 +399,7 @@ def build_summary(records: List[Dict]) -> Dict:
             "gold_auto_handle": gold_auto_count,
             "gold_escalate": gold_escalate_count,
             "predicted_auto_handle": auto_count,
-            "predicted_escalate": total - auto_count,
+            "predicted_escalate": routing_n - auto_count,
             "auto_handle_coverage": auto_coverage,
             "safe_auto_handle_precision": safe_auto_precision,
             "unsafe_auto_handle_count": false_auto,
@@ -434,42 +434,57 @@ def write_report(summary: Dict, path: Path) -> None:
     routing = summary["routing"]
     records = summary["records"]
 
-    with path.open("w", encoding="utf-8") as handle:
-        handle.write("# ANNA End-to-End Golden Evaluation\n\n")
+    unsafe = [
+        r for r in records
+        if r["predicted_should_auto_handle"] is True
+        and r["gold_should_auto_handle"] is False
+    ]
 
-        handle.write("## 1. Evaluation Setup\n\n")
+    missed_escalations = [
+        r for r in records
+        if r["predicted_should_auto_handle"] is False
+        and r["gold_should_auto_handle"] is True
+    ]
+
+    intent_failures = [
+        r for r in records
+        if not r["intent_correct"]
+    ]
+
+    with path.open("w", encoding="utf-8") as handle:
+        handle.write("# ANNA End-to-End Golden Evaluation\\n\\n")
+
+        handle.write("## 1. Evaluation Setup\\n\\n")
         handle.write(
-            f"- Golden examples: **{summary['evaluation']['golden_set_size']}**\n"
+            f"- Golden examples: **{summary['evaluation']['golden_set_size']}**\\n"
         )
         handle.write(
             "- Pipeline: intent → BGE retrieval → evidence assessment → "
-            "Qwen grounded generation → deterministic decision policy\n"
+            "Qwen grounded generation → deterministic decision policy\\n"
         )
         handle.write(
-            f"- Retrieval top-K: **{summary['evaluation']['top_k']}**\n"
+            f"- Retrieval top-K: **{summary['evaluation']['top_k']}**\\n"
         )
         handle.write(
-            "- Golden labels are authoritative and are not modified.\n"
+            "- Golden labels are authoritative and are not modified.\\n"
+        )
+        handle.write(
+            "- Intent metrics use all golden examples. Routing metrics use "
+            "only examples with an explicit `safe_to_auto_handle` label.\\n"
         )
         handle.write(
             "- `account_access and app_technical` is normalized to "
             "`account_access` only for metric compatibility because the "
-            "compound label is not a production taxonomy class.\n\n"
+            "compound label is not a production taxonomy class.\\n\\n"
         )
 
-        handle.write("## 2. Intent Classification\n\n")
-        handle.write(
-            f"- Accuracy: **{intent['accuracy']:.4f}**\n"
-        )
-        handle.write(
-            f"- Macro-F1: **{intent['macro_f1']:.4f}**\n"
-        )
-        handle.write(
-            f"- Weighted-F1: **{intent['weighted_f1']:.4f}**\n\n"
-        )
+        handle.write("## 2. Intent Classification\\n\\n")
+        handle.write(f"- Accuracy: **{intent['accuracy']:.4f}**\\n")
+        handle.write(f"- Macro-F1: **{intent['macro_f1']:.4f}**\\n")
+        handle.write(f"- Weighted-F1: **{intent['weighted_f1']:.4f}**\\n\\n")
 
-        handle.write("| Intent | Precision | Recall | F1 | Support |\n")
-        handle.write("|---|---:|---:|---:|---:|\n")
+        handle.write("| Intent | Precision | Recall | F1 | Support |\\n")
+        handle.write("|---|---:|---:|---:|---:|\\n")
 
         for label, metrics in intent["per_intent"].items():
             handle.write(
@@ -477,216 +492,74 @@ def write_report(summary: Dict, path: Path) -> None:
                 f"{metrics['precision']:.4f} | "
                 f"{metrics['recall']:.4f} | "
                 f"{metrics['f1']:.4f} | "
-                f"{metrics['support']} |\n"
+                f"{metrics['support']} |\\n"
             )
 
-        handle.write("\n## 3. Automation / Escalation\n\n")
+        handle.write("\\n## 3. Automation / Escalation\\n\\n")
         handle.write(
-            f"- Gold auto-handle cases: **{routing['gold_auto_handle']}**\n"
+            f"- Routing-labeled examples: **{routing['routing_evaluation_n']}**\\n"
         )
         handle.write(
-            f"- Gold escalation cases: **{routing['gold_escalate']}**\n"
+            f"- Gold auto-handle cases: **{routing['gold_auto_handle']}**\\n"
         )
         handle.write(
-            f"- Predicted auto-handle cases: **{routing['predicted_auto_handle']}**\n"
+            f"- Gold escalation cases: **{routing['gold_escalate']}**\\n"
         )
         handle.write(
-            f"- Predicted escalation cases: **{routing['predicted_escalate']}**\n"
+            f"- Predicted auto-handle cases: **{routing['predicted_auto_handle']}**\\n"
         )
         handle.write(
-            f"- Auto-handle coverage: **{routing['auto_handle_coverage']:.4f}**\n"
+            f"- Predicted escalation cases: **{routing['predicted_escalate']}**\\n"
         )
         handle.write(
-            f"- Safe auto-handle precision: **{routing['safe_auto_handle_precision']:.4f}**\n"
+            f"- Auto-handle coverage: **{routing['auto_handle_coverage']:.4f}**\\n"
         )
         handle.write(
-            f"- Unsafe auto-handle count: **{routing['unsafe_auto_handle_count']}**\n"
+            f"- Safe auto-handle precision: **{routing['safe_auto_handle_precision']:.4f}**\\n"
         )
         handle.write(
-            f"- Unsafe auto-handle rate over all examples: "
-            f"**{routing['unsafe_auto_handle_rate']:.4f}**\n"
+            f"- Unsafe auto-handle count: **{routing['unsafe_auto_handle_count']}**\\n"
         )
         handle.write(
-            f"- Unsafe rate among auto-handled cases: "
-            f"**{routing['unsafe_among_auto_handle_rate']:.4f}**\n"
+            "- Unsafe auto-handle rate over routing-labeled examples: "
+            f"**{routing['unsafe_auto_handle_rate']:.4f}**\\n"
         )
         handle.write(
-            f"- Escalation recall: **{routing['escalation_recall']:.4f}**\n"
+            "- Unsafe rate among auto-handled cases: "
+            f"**{routing['unsafe_among_auto_handle_rate']:.4f}**\\n"
         )
         handle.write(
-            f"- Overall decision accuracy: **{routing['decision_accuracy']:.4f}**\n\n"
+            f"- Escalation recall: **{routing['escalation_recall']:.4f}**\\n"
+        )
+        handle.write(
+            f"- Overall decision accuracy: **{routing['decision_accuracy']:.4f}**\\n\\n"
         )
 
-        handle.write("### Routing Confusion Matrix\n\n")
+        handle.write("### Routing Confusion Matrix\\n\\n")
         handle.write(
-            "| | Gold Auto | Gold Escalate |\n"
-            "|---|---:|---:|\n"
+            "| | Gold Auto | Gold Escalate |\\n"
+            "|---|---:|---:|\\n"
             f"| Predicted Auto | {routing['true_auto_handle']} | "
-            f"{routing['false_auto_handle']} |\n"
+            f"{routing['false_auto_handle']} |\\n"
             f"| Predicted Escalate | {routing['false_escalate']} | "
-            f"{routing['true_escalate']} |\n\n"
+            f"{routing['true_escalate']} |\\n\\n"
         )
 
-        # Failure slices
-        unsafe = [
-            r for r in records
-            if r["predicted_should_auto_handle"]
-            and not r["gold_should_auto_handle"]
-        ]
-
-        missed_escalations = [
-            r for r in records
-            if not r["predicted_should_auto_handle"]
-            and r["gold_should_auto_handle"]
-        ]
-
-        intent_failures = [
-            r for r in records
-            if not r["intent_correct"]
-        ]
-
-        handle_examples = lambda rows: (
-            rows[:25] if len(rows) > 25 else rows
-        )
-
-        handle = handle_examples(unsafe)
-
-        handle2 = handle_examples(missed_escalations)
-
-        handle3 = handle_examples(intent_failures)
-
-        handle.write if False else None
-
-        handle = unsafe
-
-        handle.write if False else None
-
-        handle = None
-
-        handle = unsafe
-
-        handle2 = missed_escalations
-        handle3 = intent_failures
-
-        handle.write if False else None
-
-        handle = unsafe
-
-        handle2 = missed_escalations
-        handle3 = intent_failures
-
-        handle.write if False else None
-
-        handle = unsafe
-
-        handle2 = missed_escalations
-        handle3 = intent_failures
-
-        # Unsafe automation
-        handle.write if False else None
-
-        handle = unsafe[:25]
-
-        handle.write if False else None
-
-        handle = None
-
-        handle = unsafe[:25]
-
-        handle.write if False else None
-
-        # Keep the report generation explicit rather than relying on helper
-        # abstractions so the resulting artifact is easy to inspect.
-        handle.write if False else None
-
-        handle = unsafe[:25]
-
-        handle.write if False else None
-
-        handle = None
-
-        handle.write if False else None
-
-        handle = unsafe[:25]
-
-        handle.write if False else None
-
-        # The repeated no-op expressions above intentionally do nothing.
-        # Actual report sections follow.
-        handle = unsafe[:25]
-
-        handle.write if False else None
-
-        handle = None
-
-        handle.write if False else None
-
-        handle = unsafe[:25]
-
-        handle.write if False else None
-
-        handle = None
-
-        handle.write if False else None
-
-        handle = unsafe[:25]
-
-        handle.write if False else None
-
-        handle = None
-
-        # ------------------------------------------------------------
-        # Failure sections
-        # ------------------------------------------------------------
-        handle = unsafe[:25]
-
-        handle.write if False else None
-
-        # Unsafe auto-handles
-        path.write_text if False else None
-
-        # We are already writing to `handle` above; use a separate alias
-        # for the file handle to keep the section readable.
-        out = handle
-
-        # Reset `out` to the actual file handle is impossible after the local
-        # alias reassignment above, so the failure sections are intentionally
-        # written in a second pass below.
-    
-    # Second pass appends the failure sections cleanly.
-    with path.open("a", encoding="utf-8") as handle:
-        unsafe = [
-            r for r in records
-            if r["predicted_should_auto_handle"]
-            and not r["gold_should_auto_handle"]
-        ]
-
-        missed_escalations = [
-            r for r in records
-            if not r["predicted_should_auto_handle"]
-            and r["gold_should_auto_handle"]
-        ]
-
-        intent_failures = [
-            r for r in records
-            if not r["intent_correct"]
-        ]
-
-        handle.write("## 4. Unsafe Auto-Handles\n\n")
+        handle.write("## 4. Unsafe Auto-Handles\\n\\n")
 
         if not unsafe:
-            handle.write("None.\n\n")
+            handle.write("None.\\n\\n")
         else:
             handle.write(
                 "| # | Gold Intent | Predicted Intent | "
-                "Evidence | Similarity | Message |\n"
+                "Evidence | Similarity | Message |\\n"
             )
-            handle.write("|---:|---|---|---:|---:|---|\n")
+            handle.write("|---:|---|---|---:|---:|---|\\n")
 
             for record in unsafe[:25]:
                 message = (
                     record["customer_message"]
-                    .replace("\n", " ")
+                    .replace("\\n", " ")
                     .replace("|", "\\|")
                 )
 
@@ -696,32 +569,31 @@ def write_report(summary: Dict, path: Path) -> None:
                     f"{record['predicted_intent']} | "
                     f"{record['evidence_score']:.3f} | "
                     f"{record['top_similarity']:.3f} | "
-                    f"{message} |\n"
+                    f"{message} |\\n"
                 )
 
-            handle.write("\n")
+            handle.write("\\n")
 
-        handle.write("## 5. Missed Auto-Handle Opportunities\n\n")
+        handle.write("## 5. Missed Auto-Handle Opportunities\\n\\n")
 
         if not missed_escalations:
-            handle.write("None.\n\n")
+            handle.write("None.\\n\\n")
         else:
             handle.write(
                 "| # | Gold Intent | Predicted Intent | "
-                "Decision Reason | Message |\n"
+                "Decision Reason | Message |\\n"
             )
-            handle.write("|---:|---|---|---|---|\n")
+            handle.write("|---:|---|---|---|---|\\n")
 
             for record in missed_escalations[:25]:
                 message = (
                     record["customer_message"]
-                    .replace("\n", " ")
+                    .replace("\\n", " ")
                     .replace("|", "\\|")
                 )
-
                 reason = (
                     record["decision_reason"]
-                    .replace("\n", " ")
+                    .replace("\\n", " ")
                     .replace("|", "\\|")
                 )
 
@@ -729,25 +601,25 @@ def write_report(summary: Dict, path: Path) -> None:
                     f"| {record['golden_index']} | "
                     f"{record['gold_intent']} | "
                     f"{record['predicted_intent']} | "
-                    f"{reason} | {message} |\n"
+                    f"{reason} | {message} |\\n"
                 )
 
-            handle.write("\n")
+            handle.write("\\n")
 
-        handle.write("## 6. Intent Failures\n\n")
+        handle.write("## 6. Intent Failures\\n\\n")
 
         if not intent_failures:
-            handle.write("None.\n\n")
+            handle.write("None.\\n\\n")
         else:
             handle.write(
-                "| # | Difficulty | Gold | Predicted | Message |\n"
+                "| # | Difficulty | Gold | Predicted | Message |\\n"
             )
-            handle.write("|---:|---|---|---|---|\n")
+            handle.write("|---:|---|---|---|---|\\n")
 
             for record in intent_failures[:50]:
                 message = (
                     record["customer_message"]
-                    .replace("\n", " ")
+                    .replace("\\n", " ")
                     .replace("|", "\\|")
                 )
 
@@ -756,24 +628,49 @@ def write_report(summary: Dict, path: Path) -> None:
                     f"{record['difficulty']} | "
                     f"{record['gold_intent']} | "
                     f"{record['predicted_intent']} | "
-                    f"{message} |\n"
+                    f"{message} |\\n"
                 )
 
-            handle.write("\n")
+            handle.write("\\n")
 
-        handle.write("## 7. Interpretation\n\n")
+        handle.write("## 7. Interpretation\\n\\n")
         handle.write(
             "The routing policy is deliberately conservative. A case is "
             "auto-handled only when it passes the configured intent, retrieval, "
             "evidence, generation, and risk checks. These thresholds are "
             "engineering starting points and should not be interpreted as "
-            "statistically optimal until evaluated across the golden set.\n\n"
+            "statistically optimal until evaluated across the golden set.\\n\\n"
         )
         handle.write(
             "The automation metrics should be interpreted separately from "
             "intent accuracy: a useful support agent should maximize safe "
-            "automation rather than maximize raw automation coverage.\n"
+            "automation rather than maximize raw automation coverage.\\n"
         )
+
+def report_from_saved_jsonl() -> None:
+    jsonl_path = ROOT / "artifacts" / "anna_golden_evaluation.jsonl"
+    out_md = ROOT / "artifacts" / "anna_golden_evaluation.md"
+
+    if not jsonl_path.exists():
+        raise FileNotFoundError(jsonl_path)
+
+    records = []
+    with jsonl_path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if line:
+                records.append(json.loads(line))
+
+    if len(records) != 200:
+        raise ValueError(
+            f"Expected 200 saved evaluation records, found {len(records)}"
+        )
+
+    summary = build_summary(records)
+    write_report(summary, out_md)
+
+    print(f"Report generated from {len(records)} saved evaluation records.")
+    print(f"Report: {out_md}")
 
 
 def main() -> None:
@@ -812,4 +709,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    if "--report-only" in sys.argv:
+        report_from_saved_jsonl()
+    else:
+        main()

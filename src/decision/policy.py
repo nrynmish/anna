@@ -17,10 +17,19 @@ HIGH_RISK_PATTERNS: dict[str, tuple[str, ...]] = {
     "account_compromise": (
         "hacked my account",
         "account was hacked",
-        "someone accessed my account",
-        "someone used my account",
+        "my hacked account",
+        "my hacked disabled account",
+        "hacked disabled account",
+        "hacked/disabled account",
         "account compromised",
         "account may be compromised",
+        "account has been compromised",
+        "someone accessed my account",
+        "someone used my account",
+        "someone got into my account",
+        "someone took over my account",
+        "account was taken over",
+        "unauthorized access to my account",
     ),
     "unauthorized_charge": (
         "unauthorized charge",
@@ -48,11 +57,27 @@ HIGH_RISK_PATTERNS: dict[str, tuple[str, ...]] = {
     "safety_incident": (
         "assault",
         "attacked",
+        "attack",
+        "racist attack",
+        "racist incident",
+        "racial attack",
+        "racial abuse",
+        "racist abuse",
+        "homophobic",
+        "homophobic slur",
+        "sexual assault",
+        "sexually assaulted",
+        "sexually inappropriate",
+        "driver was drunk",
+        "driver arrived drunk",
+        "drunk driver",
         "injured",
         "accident",
         "pain and suffering",
         "unsafe",
         "threatened",
+        "threatened me",
+        "dangerous driving",
     ),
 }
 
@@ -103,6 +128,55 @@ def decide(
             auto_handle=False,
             reason=f"High-risk issue detected: {', '.join(risk_flags)}.",
             risk_flags=risk_flags,
+            factors=factors,
+        )
+
+    # ANNA has no access to private account, ride, payment, refund,
+    # driver-contact, or payout state. Requests requiring verification or
+    # account-specific action must therefore be escalated even when the
+    # intent/evidence scores are strong.
+    account_specific_patterns = (
+        "check my account",
+        "check my ride",
+        "check the ride",
+        "check my trip",
+        "check the trip",
+        "contact my driver",
+        "contact the driver",
+        "driver's contact",
+        "driver contact number",
+        "driver's phone",
+        "driver phone number",
+        "driver's number",
+        "contact number for the driver",
+        "unlock my account",
+        "unblock my account",
+        "refund me",
+        "give me a refund",
+        "i would like to be refunded",
+        "i would like a refund",
+        "i want to be refunded",
+        "i want a refund",
+        "refund this",
+        "refund the charge",
+        "check my payout",
+        "where is my payout",
+        "still no payout",
+        "change my phone number",
+        "change my mobile number",
+    )
+
+    normalized_message = _normalize(decision_input.customer_message)
+
+    if any(pattern in normalized_message for pattern in account_specific_patterns):
+        return DecisionResult(
+            decision=Decision.ESCALATE,
+            auto_handle=False,
+            reason=(
+                "The request requires account-specific or transactional "
+                "verification that ANNA cannot perform."
+            ),
+            risk_flags=[],
             factors=factors,
         )
 
