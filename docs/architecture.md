@@ -1,6 +1,6 @@
 # ANNA Architecture
 
-This document describes the intended high-level system architecture for the ANNA project. The implementation is intentionally staged so the repository foundation is clean and extensible before any model or product logic is added.
+This document describes the implemented high-level architecture of ANNA: a brand-grounded customer-support agent combining intent classification, historical support-case retrieval, evidence assessment, grounded generation, and deterministic risk-aware routing.
 
 ## High-level pipeline
 
@@ -78,10 +78,10 @@ The repository is organized around the following conceptual layers:
 - src/decision: risk and automation policy
 - src/evaluation: evaluation, scoring, and LLM-as-judge workflows
 
-## Future design principles
+## Design principles
 
-- Ground decisions in historical resolutions rather than generic model output.
+- Ground responses and decisions in historical support resolutions rather than generic model output.
 - Prefer explainable evidence chains for every automated action.
-- Maintain clean separation between offline artifact building and online inference.
-- Keep evaluation reproducible and inspectable, including human-labeled benchmarks.
+- Maintain a clean separation between offline artifact construction and the online inference path.
+- Keep evaluation reproducible and inspectable, using a fixed golden benchmark and human comparison sample.
 - Avoid hard-coded or fabricated performance claims in the repository.

@@ -1,12 +1,12 @@
 # ANNA
 
-ANNA is a brand-grounded AI customer support agent designed for the Hiver SDE Intern take-home assignment. The project is intended to demonstrate how historical support data can be analyzed, organized, and used to classify customer intent, retrieve relevant past resolutions, generate grounded responses, and decide whether an issue should be auto-handled or escalated to a human operator.
+ANNA is a brand-grounded AI customer support agent built around historical customer-support cases. The project demonstrates how historical support data can be analyzed, organized, and used to classify customer intent, retrieve relevant past resolutions, generate grounded responses, and decide whether an issue should be auto-handled or escalated to a human operator.
 
 ## Current project status
 
-This repository is in the foundational setup phase. The project structure, documentation, and configuration have been established, but no AI pipeline, dataset processing, model logic, or frontend implementation has been created yet. The focus for this stage is a clean and interview-friendly foundation that will later support the full end-to-end workflow.
+ANNA now includes the end-to-end support-agent pipeline: dataset profiling, conservative support-case reconstruction, intent classification, semantic retrieval, evidence assessment, grounded response generation, deterministic risk-aware routing, and offline evaluation.
 
-## Planned system components
+## System components
 
 - Data ingestion and preprocessing
 - Brand selection and support-case filtering
@@ -71,7 +71,7 @@ Copy the example environment file and adjust values as needed:
 cp .env.example .env
 ```
 
-The repository is intentionally minimal at this stage and does not require production secrets yet. Future environment variables will be added when the AI pipeline and runtime service are implemented.
+The repository does not contain production secrets. Runtime configuration is provided through environment variables where required.
 
 ## Development commands
 
@@ -79,17 +79,16 @@ The repository is intentionally minimal at this stage and does not require produ
 # Run tests
 pytest
 
-# Run linting (when configured in a later stage)
+# Run linting
 ruff check .
 
-# Type checking (when configured in a later stage)
+# Type checking
 mypy src
 ```
 
 ## Notes
 
-- The evaluation pipeline will eventually be reproducible in under 15 minutes.
-- Actual model and evaluation results will never be hard-coded or fabricated in this repository.
+- Reported model and evaluation results are generated from saved evaluation artifacts and are not hard-coded.
 
 ## Dataset reconnaissance
 

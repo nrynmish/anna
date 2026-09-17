@@ -1,7 +1,7 @@
 [project]
 name = "anna"
 version = "0.1.0"
-description = "ANNA: AI customer support agent foundation for the Hiver SDE Intern take-home assignment"
+description = "ANNA: brand-grounded AI customer support agent"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
